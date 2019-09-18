@@ -1,0 +1,6 @@
+name: 'Fake Fields'
+description: 'Module that allows the use of a single field to hold "fake fields".'
+type: module
+core: 8.x
+dependencies:
+  - search_api
