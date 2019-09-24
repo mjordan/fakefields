@@ -31,6 +31,8 @@ class IndexFakeFields extends ProcessorPluginBase {
   public function getPropertyDefinitions(DatasourceInterface $datasource = NULL) {
     $properties = [];
 
+    // $node_storage = \Drupal::entityTypeManager()->getStorage('node');
+
     if (!$datasource) {
       $definition = [
         'label' => $this->t('Fake fields'),
@@ -38,8 +40,12 @@ class IndexFakeFields extends ProcessorPluginBase {
         'type' => 'entity:node',
         'processor_id' => $this->getPluginId(),
       ];
-      $properties['fakefields_fake_field_1'] = new ProcessorProperty($definition);
-      $properties['fakefields_fake_field_2'] = new ProcessorProperty($definition);
+
+      // @todo: get this list from the value of the storage field (e.g. 'field_mark_s_fake_field'). But how do we get that field's value?
+      $this->fake_fields = array('fakefields_fake_field_1', 'fakefields_fake_field_2');
+      foreach ($this->fake_fields as $fake_field) {
+        $properties[$fake_field] = new ProcessorProperty($definition);
+      }
     }
 
     return $properties;
@@ -49,7 +55,7 @@ class IndexFakeFields extends ProcessorPluginBase {
    * {@inheritdoc}
    */
   public function addFieldValues(ItemInterface $item) {
-
+    dd($this->properties);
     $node = $item->getOriginalObject()->getValue();
     if (!($node instanceof NodeInterface)) {
       return;
@@ -57,20 +63,17 @@ class IndexFakeFields extends ProcessorPluginBase {
 
     if ($node->hasField('field_mark_s_fake_field')) {
       $parser = new Parser();
-       $fake_field = $node->get('field_mark_s_fake_field')->getValue();
-       if (isset($fake_field[0]['value'])) {
-         dd($fake_field[0]['value']);
-       }
+      $fake_field = $node->get('field_mark_s_fake_field')->getValue();
+      if (isset($fake_field[0]['value'])) {
+        dd($fake_field[0]['value']);
+      }
     }
 
-
+    // $fake_fields = array('fakefields_fake_field_1', 'fakefields_fake_field_2');
     $fields = $item->getFields(FALSE);
-    $field_1 = $this->getFieldsHelper()
-      ->filterForPropertyPath($fields, NULL, 'fakefields_fake_field_1');
-    $field_2 = $this->getFieldsHelper()
-      ->filterForPropertyPath($fields, NULL, 'fakefields_fake_field_2');
-    $field_1['fakefields_fake_field_1']->addValue("Field 1 and feeling fine.");
-    $field_2['fakefields_fake_field_2']->addValue("What are you looking at?");
+    foreach ($this->fake_fields as $fake_field) {
+      $field = $this->getFieldsHelper()->filterForPropertyPath($fields, NULL, $fake_field);
+      $field[$fake_field]->addValue("Field 1 and feeling fine.");
+    }
   }
-
 }
