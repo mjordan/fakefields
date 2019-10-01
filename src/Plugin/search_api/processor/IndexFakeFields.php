@@ -4,9 +4,21 @@ namespace Drupal\fakefields\Plugin\search_api\processor;
 
 use Drupal\search_api\Datasource\DatasourceInterface;
 use Drupal\search_api\Item\ItemInterface;
-use Drupal\search_api\Processor\ProcessorPluginBase;
 use Drupal\search_api\Processor\ProcessorProperty;
 use Drupal\node\NodeInterface;
+use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Entity\TypedData\EntityDataDefinitionInterface;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Plugin\PluginFormInterface;
+use Drupal\Core\TypedData\ComplexDataDefinitionInterface;
+use Drupal\search_api\IndexInterface;
+use Drupal\search_api\Item\FieldInterface;
+use Drupal\search_api\Plugin\PluginFormTrait;
+use Drupal\search_api\Processor\ProcessorPluginBase;
+use Drupal\search_api\Utility\Utility;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+
 use Symfony\Component\Yaml\Parser;
 
 /**
@@ -18,20 +30,23 @@ use Symfony\Component\Yaml\Parser;
  *   description = @Translation("Index fields managed by the Fake Fields module."),
  *   stages = {
  *     "add_properties" = 0,
- *   },
- *   locked = false,
- *   hidden = false,
+ *   }
  * )
  */
-class IndexFakeFields extends ProcessorPluginBase {
+class IndexFakeFields extends ProcessorPluginBase implements PluginFormInterface {
+
+  /**
+   * The list of fake fields in the processor config form.
+   *
+   * @var array
+   */
+  protected $fake_fields_list;
 
   /**
    * {@inheritdoc}
    */
   public function getPropertyDefinitions(DatasourceInterface $datasource = NULL) {
     $properties = [];
-
-    // $node_storage = \Drupal::entityTypeManager()->getStorage('node');
 
     if (!$datasource) {
       $definition = [
@@ -41,10 +56,11 @@ class IndexFakeFields extends ProcessorPluginBase {
         'processor_id' => $this->getPluginId(),
       ];
 
-      // @todo: get this list from the value of the storage field (e.g. 'field_mark_s_fake_field'). But how do we get that field's value?
-      $this->fake_fields = array('fakefields_fake_field_1', 'fakefields_fake_field_2');
-      foreach ($this->fake_fields as $fake_field) {
-        $properties[$fake_field] = new ProcessorProperty($definition);
+      $this->fake_fields_list = preg_split("/\\r\\n|\\r|\\n/", $this->configuration['fake_fields']);
+      foreach ($this->fake_fields_list as $fake_field_name) {
+        $fake_field_name = trim($fake_field_name);
+        dd($fake_field_name);
+        $properties[$fake_field_name] = new ProcessorProperty($definition);
       }
     }
 
@@ -55,25 +71,75 @@ class IndexFakeFields extends ProcessorPluginBase {
    * {@inheritdoc}
    */
   public function addFieldValues(ItemInterface $item) {
-    dd($this->properties);
     $node = $item->getOriginalObject()->getValue();
     if (!($node instanceof NodeInterface)) {
       return;
     }
 
-    if ($node->hasField('field_mark_s_fake_field')) {
-      $parser = new Parser();
-      $fake_field = $node->get('field_mark_s_fake_field')->getValue();
-      if (isset($fake_field[0]['value'])) {
-        dd($fake_field[0]['value']);
+    $parser = new Parser();
+    $fields = $item->getFields(FALSE);
+    $fake_fields_source = $this->configuration['fake_fields_source'];
+    if ($node->hasField($fake_fields_source)) {
+      $fake_fields = array();
+      $fake_fields_source_value = $node->get($fake_field_source)->getValue();
+      if (isset($fake_fields_source[0]['value'])) {
+        $fake_fields = preg_split("/\\r\\n|\\r|\\n/", $fake_fields_source[0]['value']);
+        foreach ($fake_fields as $fake_field) {
+	  list($fake_field_name, $fake_field_value) = explode(':', $fake_field, 2); 
+          $fake_field_name = trim($fake_field_name);
+	  $field = $this->getFieldsHelper()->filterForPropertyPath($fields, NULL, $fake_field_name);
+          $field[$fake_field_name]->addValue(trim($fake_field_value));
+        }
       }
     }
 
-    // $fake_fields = array('fakefields_fake_field_1', 'fakefields_fake_field_2');
-    $fields = $item->getFields(FALSE);
-    foreach ($this->fake_fields as $fake_field) {
-      $field = $this->getFieldsHelper()->filterForPropertyPath($fields, NULL, $fake_field);
-      $field[$fake_field]->addValue("Field 1 and feeling fine.");
-    }
   }
+
+ /**
+   * {@inheritdoc}
+   */
+  public function defaultConfiguration() {
+    $configuration = parent::defaultConfiguration();
+
+    $configuration += [
+      'fake_fields_source' => '',
+      'fake_fields' => '',
+    ];
+
+    return $configuration;
+  }
+
+ /**
+   * {@inheritdoc}
+   */
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
+    $form['fake_fields_source'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Machine namd of field that holds your "fake fields"'),
+      '#default_value' => $this->configuration['fake_fields_source'],
+    ];
+
+    $form['fake_fields'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Fake fields'),
+      '#description' => $this->t('Fake field names. One per line.'),
+      '#default_value' => $this->configuration['fake_fields'],
+    ];
+
+    return $form;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function validateConfigurationForm(array &$form, FormStateInterface $formState) {
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
+    $this->setConfiguration($form_state->getValues());
+  }
+  
 }
