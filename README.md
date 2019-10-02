@@ -16,7 +16,35 @@ Simon Fraser University has a large number of Islandora 7.x collections that hav
 
 ## Installation and configuration
 
-Best not to, unless you want to help hack out a solution to a central problem: since the `$properties` array defined in `getPropertyDefinitions()` is keyed using field names, we must get the fake field names present in the node's storage field. Loading the current node within `getPropertyDefinitions()` being indexed is eluding me. If this module is going to index these fake fields, it needs to be able to set their properties dynamically (without configuration) within `getPropertyDefinitions()`.
+### Rough notes for how to index fake fields managed by this module
+
+#### Create the storage field
+
+1. Create a field in your Islandora content type(s) to hold the raw fake field data. This field should be of type 'Text (plain, long)'. Note the new field's machine name, e.g., `field_fake_fields` since you will need it below.
+1. Adjust permissions on this field so it is not viewable by users other than the owner and admin users. You do not want general users to be able to view this field.
+
+Your storage field is now ready and can be populated with fake field data.
+
+#### Populate the storage field
+
+To do.
+
+#### Index the fake field data
+
+1. Visit the Search API configuration at `admin/config/search/search-api`.
+1. Click on "Default Solr content index".
+1. Click on the "Processors" tab.
+1. Enable the "Index fake fields" processor.
+1. Scroll down and click on the "Index fake fields" tab.
+1. In the "Machine namd of field that holds your 'fake fields' field, add the machine name of your storage field.
+1. In the "Fake field names" field, add (one per line) the names of your fake fields.
+1. Click "Save".
+1. At the top of the page, click on the "Fields" tab.
+1. Click on the "Add fields" button.
+1. Add your fake fields (don't forget to click on the "Done" button at the bottom of the field list) and choose the desired label and type for each. Refer to the "Data types" guide at the bottom of the page to determine which type to choose.
+1. At the bottom of the page, click on the "Save changed" button.
+
+Now, when nodes are created or updated, or you reindex your site, the fake field data will appear in the Solr index just like any other data.
 
 ## Current maintainer
 
