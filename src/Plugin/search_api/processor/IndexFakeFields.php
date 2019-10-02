@@ -50,17 +50,16 @@ class IndexFakeFields extends ProcessorPluginBase implements PluginFormInterface
 
     if (!$datasource) {
       $definition = [
-        'label' => $this->t('Fake fields'),
-        'description' => $this->t('Fake fields'),
-        'type' => 'entity:node',
+        'label' => $this->t('Fake field'),
+        'description' => $this->t('Fake field managed by the Fake Fields module'),
+        'type' => 'string',
         'processor_id' => $this->getPluginId(),
       ];
 
       $this->fake_fields_list = preg_split("/\\r\\n|\\r|\\n/", $this->configuration['fake_fields']);
-      foreach ($this->fake_fields_list as $fake_field_name) {
-        $fake_field_name = trim($fake_field_name);
-        dd($fake_field_name);
-        $properties[$fake_field_name] = new ProcessorProperty($definition);
+      foreach ($this->fake_fields_list as $fake_field) {
+        $fake_field_name = trim($fake_field);
+	$properties[$fake_field_name] = new ProcessorProperty($definition);
       }
     }
 
@@ -79,11 +78,12 @@ class IndexFakeFields extends ProcessorPluginBase implements PluginFormInterface
     $parser = new Parser();
     $fields = $item->getFields(FALSE);
     $fake_fields_source = $this->configuration['fake_fields_source'];
+
     if ($node->hasField($fake_fields_source)) {
       $fake_fields = array();
-      $fake_fields_source_value = $node->get($fake_field_source)->getValue();
-      if (isset($fake_fields_source[0]['value'])) {
-        $fake_fields = preg_split("/\\r\\n|\\r|\\n/", $fake_fields_source[0]['value']);
+      $fake_fields_source_value = $node->get($fake_fields_source)->getValue();
+      if (isset($fake_fields_source_value[0]['value'])) {
+	$fake_fields = preg_split("/\\r\\n|\\r|\\n/", $fake_fields_source_value[0]['value']);
         foreach ($fake_fields as $fake_field) {
 	  list($fake_field_name, $fake_field_value) = explode(':', $fake_field, 2); 
           $fake_field_name = trim($fake_field_name);
