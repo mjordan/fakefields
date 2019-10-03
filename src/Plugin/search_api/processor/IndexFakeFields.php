@@ -86,8 +86,8 @@ class IndexFakeFields extends ProcessorPluginBase implements PluginFormInterface
 	$fake_fields = $parser->parse(trim($fake_fields_source_value[0]['value']));
 	foreach ($fake_fields as $fake_field_name => $fake_field_value) {
 	  $field = $this->getFieldsHelper()->filterForPropertyPath($fields, NULL, $fake_field_name);
-	  // @todo: Multivalued fields are not being indexed.
-          if (is_array($fake_field_value)) {
+	  // @todo: Multivalued fields are not being indexed. See issue #1.
+	  if (is_array($fake_field_value)) {
             $field[$fake_field_name]->addValue($fake_field_value);
 	  }
           if (is_string($fake_field_value)) {

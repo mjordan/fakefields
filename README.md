@@ -10,7 +10,7 @@ mysecondnonstandardfield: "Anothe value"
 athird_unicorn_field: ["first value", "second value"]
 ```
 
-This module can add these key/value pairs to Drupal's Solr index like any other fields, with the required configuration.
+This experimental module adds key/value pairs to Drupal's Solr index like any other fields, with the required configuration.
 
 Simon Fraser University has a large number of Islandora 7.x collections that have unique fields that do not fit nicely into MODS. My goal with this module is to explore ways of storing custom fields such that we do not need a content type per collection. 
 
@@ -27,7 +27,14 @@ Your storage field is now ready and can be populated with fake field data.
 
 #### Populate the storage field
 
-To do.
+(This is incomplete)
+
+Content of the storage field is in YAML format restricted to string and list values as illustrated here:
+
+```
+my_singlevaluedield: "I am a value"
+a_multivalued_field: ["first value", "second value"]
+```
 
 #### Index the fake field data
 
