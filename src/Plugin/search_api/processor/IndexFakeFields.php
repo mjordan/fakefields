@@ -75,20 +75,24 @@ class IndexFakeFields extends ProcessorPluginBase implements PluginFormInterface
       return;
     }
 
-    $parser = new Parser();
     $fields = $item->getFields(FALSE);
     $fake_fields_source = $this->configuration['fake_fields_source'];
 
     if ($node->hasField($fake_fields_source)) {
+      $parser = new Parser();
       $fake_fields = array();
       $fake_fields_source_value = $node->get($fake_fields_source)->getValue();
       if (isset($fake_fields_source_value[0]['value'])) {
-	$fake_fields = preg_split("/\\r\\n|\\r|\\n/", $fake_fields_source_value[0]['value']);
-        foreach ($fake_fields as $fake_field) {
-	  list($fake_field_name, $fake_field_value) = explode(':', $fake_field, 2); 
-          $fake_field_name = trim($fake_field_name);
+	$fake_fields = $parser->parse(trim($fake_fields_source_value[0]['value']));
+	foreach ($fake_fields as $fake_field_name => $fake_field_value) {
 	  $field = $this->getFieldsHelper()->filterForPropertyPath($fields, NULL, $fake_field_name);
-          $field[$fake_field_name]->addValue(trim($fake_field_value));
+	  // @todo: Multivalued fields are not being indexed.
+          if (is_array($fake_field_value)) {
+            $field[$fake_field_name]->addValue($fake_field_value);
+	  }
+          if (is_string($fake_field_value)) {
+	    $field[$fake_field_name]->addValue(trim($fake_field_value));
+	  }
         }
       }
     }
