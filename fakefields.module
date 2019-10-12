@@ -1,0 +1,40 @@
+<?php
+
+
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Core\Entity\EntityInterface;
+
+/**
+ * Implements hook_entity_extra_field_info().
+ */
+function fakefields_entity_extra_field_info() {
+  // $config_factory = \Drupal::service('config.factory')->get(IslandoraSettingsForm::CONFIG_NAME);
+  $fake_fields = [];
+
+    $fake_fields['node']['islandora_object']['display']['foo'] = array(
+    // $fake_fields[$content_entity][$bundle]['display']['field_gemini_uri'] = [
+      'label' => t('Foo!'),
+      'description' => t('The foo'),
+      'weight' => 100,
+      'visible' => TRUE,
+    );
+  
+  return $fake_fields;
+}
+
+/**
+ * Implements hook_entity_view().
+ */
+function fakefields_entity_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, $view_mode) {
+	$current_entity_type = \Drupal::routeMatch()->getParameters()->get($entity->getEntityTypeId());
+	devel_debug($current_entity_type);
+
+          $build['foo'] = [
+            '#type' => 'container',
+            '#attributes' => [
+              'id' => 'fake_field_foo',
+            ],
+            '#markup' => "Heellooooo"
+          ];	
+
+}
